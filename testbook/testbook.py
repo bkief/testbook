@@ -4,6 +4,7 @@ import importlib
 import unittest
 import time
 import json
+import glob
 from functools import wraps
 import datetime as dt
 
@@ -32,6 +33,8 @@ def main():
     return r
 
 def discover(search_dir='.', recurcive=True):
+    for f in os.walk(search_dir):
+        pass
     return ['tests/simple_test.ipynb']
 
 def _get_testbook_title(tf):
