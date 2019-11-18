@@ -103,5 +103,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# IDE
+.vscode/
+
 # Custom
-_quicktest.py
+reports/
+/_quicktest.py

@@ -27,18 +27,44 @@ def get_results_summary(results, testset_start_time):
 
         elapsed_time = 0
         failures = errors = skips = successes = 0
-        for testcase in results:
-            for test in results[testcase]:
-                if results[testcase][test]['OUTCOME'] == 'SUCCESS':
-                    successes += 1
-                elif results[testcase][test]['OUTCOME'] == 'FAILURE':
-                    failures += 1
-                elif results[testcase][test]['OUTCOME'] == 'SKIPPED':
-                    skips += 1
-                elif results[testcase][test]['OUTCOME'] == 'ERROR':
-                    errors += 1
+        for testset_name, testset in results.items():
+            _elapsed_time = 0
+            _failures = _errors = _skips = _successes = 0
+            for testcase_name, testcase in testset['tests'].items():
+                for test_name, test in testcase.items():
+                    if test['outcome'] == 'SUCCESS':
+                        _successes += 1
+                    elif test['outcome'] == 'FAILURE':
+                        _failures += 1
+                    elif test['outcome'] == 'SKIPPED':
+                        _skips += 1
+                    elif test['outcome'] == 'ERROR':
+                        _errors += 1
 
-                elapsed_time += results[testcase][test]['DURATION']
+                    _elapsed_time += test['duration']
+
+            successes += _successes
+            failures += _failures
+            skips += _skips
+            errors += _errors
+            elapsed_time += _elapsed_time
+
+            if _elapsed_time > 1:
+                duration = '{:2.2f} s'.format(_elapsed_time)
+            else:
+                duration = '{:d} ms'.format(int(_elapsed_time * 1000))
+
+            results[testset_name]['summary'] = {'total': sum([_successes,
+                                                              _failures,
+                                                              _skips,
+                                                              _errors]),
+                                                 'success': _successes,
+                                                 'falure': _failures,
+                                                 'skip': _skips,
+                                                 'error': _errors,
+                                                 'duration': duration
+                                                }
+            
 
         results_summary = {
             "total": failures+errors+skips+successes,

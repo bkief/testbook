@@ -2,6 +2,7 @@ from unittest import TextTestResult
 import traceback
 import time
 
+from . import reports
 
 class _TestInfo(object):
     """" Keeps information about the execution of a test method. """
@@ -88,48 +89,49 @@ class TestBookResult(TextTestResult):
 
     def stopTest(self, test):
         elapsed_time = time.time() - self.start_time
-        result_summary = {'DURATION': elapsed_time,
-                          'DESCRIPTION': self.getDescription(test),
+        result_summary = {'duration': elapsed_time,
+                          'duration_fmt': reports._format_duration(elapsed_time), 
+                          'description': self.getDescription(test),
                           'test_id': '1.1'
                           }
         self.json_result[self.testcasename][self.testmethodname].update(result_summary)
         super().stopTest(test)
 
     def addSuccess(self, test):
-        result_summary = {'OUTCOME': 'SUCCESS',
-                          'EXCEPTION': ''
+        result_summary = {'outcome': 'SUCCESS',
+                          'exception': ''
                           }
         self.json_result[self.testcasename][self.testmethodname].update(result_summary)
         super().addSuccess(test)
 
     def addError(self, test, err):
-        result_summary = {'OUTCOME': 'ERROR',
-                          'EXCEPTION': self._exc_info_to_string(err, test)
+        result_summary = {'outcome': 'ERROR',
+                          'exception': self._exc_info_to_string(err, test)
                           }
         self.json_result[self.testcasename][self.testmethodname].update(result_summary)
         super().addError(test, err)
 
     def addFailure(self, test, err):
-        result_summary = {'OUTCOME': 'FAILURE',
-                          'EXCEPTION': self._exc_info_to_string(err, test)
+        result_summary = {'outcome': 'FAILURE',
+                          'exception': self._exc_info_to_string(err, test)
                           }
         self.json_result[self.testcasename][self.testmethodname].update(result_summary)
         super().addFailure(test, err)
 
     def addSkip(self, test, reason):
-        result_summary = {'OUTCOME': 'SKIPPED',
-                          'EXCEPTION': ''
+        result_summary = {'outcome': 'SKIPPED',
+                          'exception': ''
                           }
         self.json_result[self.testcasename][self.testmethodname].update(result_summary)
         super().addSkip(test, reason)
 
     def addExpectedFailure(self, test, err):
-        result_summary = {'OUTCOME': 'EXPECTEDFAILURE'}
+        result_summary = {'outcome': 'EXPECTEDFAILURE'}
         self.json_result[self.testcasename][self.testmethodname].update(result_summary)
         super().addExpectedFailure(test, err)
 
     def addUnexpectedSuccess(self, test):
-        result_summary = {'OUTCOME': 'UNEXPECTEDSUCCESS'}
+        result_summary = {'outcome': 'UNEXPECTEDSUCCESS'}
         self.json_result[self.testcasename][self.testmethodname].update(result_summary)
         super().addUnexpectedSuccess(test)
 
