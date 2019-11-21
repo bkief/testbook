@@ -1,18 +1,18 @@
 import sys
 import os
-import importlib
 import unittest
-import time
-import json
-import glob
-from functools import wraps
+import fnmatch
 import datetime as dt
+import logging
 
 import scrapbook.api as sb
 import papermill
+import ipykernel.kernelspec as ipyk
+import jupyter_client.kernelspec as jupyter_kernel
 
 from . import runner
 from . import reports
+
 
 def attach_test(cls):
     def decorator(func):
@@ -27,34 +27,65 @@ def main():
                            testRunner=testRunner)
     
     sb.glue("testbook_result", r.result.json_result)
-    with open('test_result.json', 'w') as w:
-        json.dump(r.result.json_result, w)
 
     return r
 
+
+###############################################################################
+#==============================================================================
+###############################################################################
+
+class JupyterEnv:
+    def __init__(self, kernel_name):
+        self.pyinterpreter = sys.executable
+        self.kernel = kernel_name
+
+    def __enter__(self):
+        ipyk.install(user=True, kernel_name=self.kernel, 
+                     display_name=self.kernel)
+        return self 
+
+    def __exit__(self, type, value, traceback):
+        jupyter_kernel.KernelSpecManager().remove_kernel_spec(self.kernel)
+
+
 def discover(search_dir='.', recurcive=True):
-    for f in os.walk(search_dir):
-        pass
-    return ['tests/simple_test.ipynb']
+    search_dir = os.path.abspath(search_dir)
+    tb_abspath = []
+    for root, dirs, files in os.walk(search_dir):
+        for f in files:
+            if (fnmatch.fnmatch(f.lower(), "test*.ipynb") or
+                  fnmatch.fnmatch(f.lower(), "*test.ipynb")):
+                tb_abspath.append(os.path.join(root, f))
+
+        if not recurcive:
+            break
+
+    return tb_abspath
 
 def _get_testbook_title(tf):
     return 'Test File 1'
 
-def run():
+
+def run(search_dir='.', recurcive=True):
     testset_start_time = dt.datetime.now()
-    test_files = discover()
+    test_files = discover(search_dir, recurcive)
+    print(test_files)
     test_results = {}
-    import json
     import pprint
+    with JupyterEnv("venv_testbook") as jnb:
+        for tf in test_files:
+
+            papermill.execute_notebook(tf, tf, kernel_name=jnb.kernel)
+
     for tf in test_files:
-        papermill.execute_notebook(tf, tf)
-        os.system("py -3 %s"%tf)
         test_result_name = _get_testbook_title(tf)
-        # with open('test_result.json') as f:
-        #     test_result = json.load(f)
 
         tb = sb.read_notebook(tf)
-        test_result = tb.scraps.data_dict['testbook_result']
+        if 'testbook_result' in tb.scraps.data_dict:
+            test_result = tb.scraps.data_dict['testbook_result']
+        else:
+            test_result = {}
         
         pprint.pprint(test_result)
         
@@ -62,10 +93,8 @@ def run():
                             'tests': test_result}
     
     s = reports.generate_results_html(test_results, testset_start_time)
-    #print(s)
 
 # !!! - Must be kept at bottom of module - !!!
-
 # Involking double-underscore black magic
 _modself_ = sys.modules[__name__]
 testbook_attr = [a for a in _modself_.__dict__.keys() if not a.startswith('__')]
@@ -76,5 +105,5 @@ for attrib in unittest_attr:
         continue
 
     _modself_.__setattr__(attrib, getattr(unittest, attrib))
-    
+
 # !!!
