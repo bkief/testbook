@@ -58,8 +58,7 @@ def _discover(search_dir='.', recursive=False):
     tb_abspath = []
     for root, dirs, files in os.walk(search_dir):
         for f in files:
-            if (fnmatch.fnmatch(f.lower(), "test*.ipynb") or
-                  fnmatch.fnmatch(f.lower(), "*test.ipynb")):
+            if fnmatch.fnmatch(f.lower(), "test*.ipynb"):
                 tb_abspath.append(os.path.join(root, f))
 
         if not recursive:
