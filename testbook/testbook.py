@@ -18,16 +18,18 @@ def attach_test(cls):
     def decorator(func):
         setattr(cls, func.__name__, func)
         return func
-    
+
     return decorator
 
-def main():
+
+def main(title=None):
     testRunner = unittest.TextTestRunner(resultclass=runner.TestBookResult)
     r = unittest.main(verbosity=2, exit=False, argv=[''], 
-                           testRunner=testRunner)
-    
+                      testRunner=testRunner)
     sb.glue("testbook_result", r.result.json_result)
-
+    if title:
+        sb.glue("testbook_title", title)
+    
     return r
 
 
@@ -49,7 +51,9 @@ class JupyterEnv:
         jupyter_kernel.KernelSpecManager().remove_kernel_spec(self.kernel)
 
 
-def discover(search_dir='.', recurcive=True):
+def _discover(search_dir='.', recursive=False):
+    logging.info("Search Dir: %s"%search_dir)
+    logging.info("Recursive: %s"%recursive)
     search_dir = os.path.abspath(search_dir)
     tb_abspath = []
     for root, dirs, files in os.walk(search_dir):
@@ -58,52 +62,63 @@ def discover(search_dir='.', recurcive=True):
                   fnmatch.fnmatch(f.lower(), "*test.ipynb")):
                 tb_abspath.append(os.path.join(root, f))
 
-        if not recurcive:
+        if not recursive:
             break
 
     return tb_abspath
 
-def _get_testbook_title(tf):
-    return 'Test File 1'
 
-
-def run(search_dir='.', recurcive=True):
+def run(search_dir='.', recursive=False):
     testset_start_time = dt.datetime.now()
-    test_files = discover(search_dir, recurcive)
-    print(test_files)
+    test_files = _discover(search_dir, recursive)
+    logging.info("Discovered: %s"%test_files)
     test_results = {}
-    import pprint
+
+    if not os.path.exists(".\\reports"):
+        os.makedirs('reports')
+
+    proceeced_testbooks = []
     with JupyterEnv("venv_testbook") as jnb:
         for tf in test_files:
+            out_notebook = os.path.join('reports', "_" + os.path.basename(tf))
+            proceeced_testbooks.append(out_notebook)
+            try:
+                papermill.execute_notebook(tf, out_notebook, kernel_name=jnb.kernel)
+            except Exception as e:
+                print(e)
 
-            papermill.execute_notebook(tf, tf, kernel_name=jnb.kernel)
-
-    for tf in test_files:
-        test_result_name = _get_testbook_title(tf)
-
+    for tf in proceeced_testbooks:
         tb = sb.read_notebook(tf)
+        if 'testbook_title' in tb.scraps.data_dict:
+            test_result_name = tb.scraps.data_dict['testbook_title']
+        else:
+            test_result_name = os.path.basename(tf)
+
         if 'testbook_result' in tb.scraps.data_dict:
             test_result = tb.scraps.data_dict['testbook_result']
         else:
             test_result = {}
-        
-        pprint.pprint(test_result)
-        
+
         test_results[tf] = {'title': test_result_name,
                             'tests': test_result}
-    
+
+    logging.info("Generating report...")
     s = reports.generate_results_html(test_results, testset_start_time)
+
+###############################################################################
+#==============================================================================
+###############################################################################
 
 # !!! - Must be kept at bottom of module - !!!
 # Involking double-underscore black magic
-_modself_ = sys.modules[__name__]
-testbook_attr = [a for a in _modself_.__dict__.keys() if not a.startswith('__')]
-unittest_attr = [a for a in unittest.__all__ ]
+# _modself_ = sys.modules[__name__]
+# testbook_attr = [a for a in _modself_.__dict__.keys() if not a.startswith('__')]
+# unittest_attr = [a for a in unittest.__all__ ]
 
-for attrib in unittest_attr:
-    if attrib in testbook_attr:
-        continue
+# for attrib in unittest_attr:
+#     if attrib in testbook_attr:
+#         continue
 
-    _modself_.__setattr__(attrib, getattr(unittest, attrib))
+#     _modself_.__setattr__(attrib, getattr(unittest, attrib))
 
 # !!!
