@@ -13,7 +13,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 setup(
     name='testbook',  # Required
-    version='0.0.1.dev1',  # Required
+    version='0.0.5',  # Required
     description='A testing package using Jupyter Notebooks',  # Optional
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional; # text/plain, text/x-rst, and text/markdown
@@ -45,7 +45,8 @@ setup(
     #
     #   py_modules=["my_module"],
     #
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
+    packages=find_packages(exclude=['contrib', 'docs', 'tests',
+                                    'env', 'reports', '.vscode']),  # Required
 
     # Specify which Python versions you support. In contrast to the
     # 'Programming Language' classifiers above, 'pip install' will check this
