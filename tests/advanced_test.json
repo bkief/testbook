@@ -1,0 +1,15 @@
+{
+    "apples": ["pink lady", "gala", "golden delicious", "jonathan"],
+    "oranges": ["valencia", "navel", "clementine", "tangelo"],
+    "compare": [
+        ["pink lady", "golden delicious"],
+        ["pink lady", "clementine"],
+        ["navel", "clementine"],
+        ["valencia", "navel"],
+        ["jonathan", "gala"]
+    ],
+    "orchard": {
+        "orange trees": 200,
+        "apple trees": 201
+    }
+}

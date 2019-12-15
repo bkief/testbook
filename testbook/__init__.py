@@ -1,2 +1,1 @@
-import testbook
-from .testbook import *
+from .testbook import attach_test, main
