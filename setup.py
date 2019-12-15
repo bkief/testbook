@@ -13,7 +13,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 setup(
     name='testbook',  # Required
-    version='0.0.5',  # Required
+    version='0.0.6',  # Required
     description='A testing package using Jupyter Notebooks',  # Optional
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional; # text/plain, text/x-rst, and text/markdown
